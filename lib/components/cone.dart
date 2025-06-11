@@ -16,8 +16,7 @@ class _ConeState extends State<Cone> {
     Positioned(
       top: widget.coneModel.top,
       left: widget.coneModel.left,
-      child: Container(
-        color: Colors.red,
+      child: SizedBox(
         height: widget.coneModel.height,
         width: widget.coneModel.width,
         child: Image.asset(

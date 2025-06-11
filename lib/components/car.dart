@@ -14,8 +14,7 @@ class _CarState extends State<Car> {
     return Positioned(
       top: widget.car.top,
       left: widget.car.left,
-      child: Container(
-        color: Colors.blue,
+      child: SizedBox(
         height: widget.car.height,
         width: widget.car.width,
         child: Image.asset("assets/cars/${widget.car.color}_car.png",

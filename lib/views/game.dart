@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import 'package:gyro_race/components/star.dart';
 import 'package:gyro_race/models/car_model.dart';
 import 'package:gyro_race/models/cone_model.dart';
 import 'package:gyro_race/models/star_model.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 
 class Game extends StatefulWidget {
   final String carColor;
@@ -23,10 +25,15 @@ class Game extends StatefulWidget {
 
 class _GameState extends State<Game> with TickerProviderStateMixin {
   late Ticker _ticker;
-
-  //game actually ends 2 seconds later bc i still need to show end_track
+  final StreamController _gyroController = StreamController();
+  StreamSubscription? _gyroSubscription;
   final int gameDurationinSeconds = 25;
   late Duration timeElasedOnPaused;
+
+  final double _sensitivityFactor = 12.0;
+  double _targetCarPosition = 100.0;
+  double _currentGyroValue = 0.0;
+  final double _movementSmoothness = 0.12;
 
   String shadeText = "0";
   bool showShade = true;
@@ -49,11 +56,13 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     });
 
     startCountDown();
+
   }
   
   @override
   void dispose() {
     _ticker.dispose();
+    _gyroSubscription?.cancel();
     super.dispose();
   }
   
@@ -62,10 +71,12 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   double acceleration = elapsed.inMilliseconds.clamp(0, speed).toDouble() / 1000;
 
   if (showEndTrack) {
-    double timeSinceBraking = (elapsed.inSeconds - gameDurationinSeconds).toDouble().clamp(0, 4);
+    double timeSinceBraking = (elapsed.inSeconds - gameDurationinSeconds).toDouble().clamp(0, 5);
     
-    double brakingFactor = 1 - (timeSinceBraking / 4.0);
+    double brakingFactor = 1 - (timeSinceBraking / 5.0);
     acceleration *= brakingFactor;
+  } else if (firstTrackOver) {
+    acceleration = 7.5;
   }
   
   setState(() {
@@ -88,14 +99,22 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     coneModel.top = trackPosition;
     
     starModel.top = (trackPosition + MediaQuery.of(context).size.height * 0.5) % MediaQuery.of(context).size.height;
+
+    if (_currentGyroValue != 0) {
+      _targetCarPosition = _targetCarPosition - (_currentGyroValue * _sensitivityFactor);
+      _targetCarPosition = _targetCarPosition.clamp(80.0, 240.0);
+    }
+    
+    double distance = _targetCarPosition - car.left;
+    car.left += distance * _movementSmoothness;
     
     if (coneModel.top > 0 && coneModel.top < MediaQuery.of(context).size.height - 50) {
       if (checkCollision(coneModel.bounds)) {
-        //endGame("Failed");
+        endGame("Failed");
       }
     }
     if (starModel.top > 0 && starModel.top < MediaQuery.of(context).size.height - 50) {
-      if (checkCollision(starModel.bounds) && (elapsed.inSeconds > (lastDurationOfScore.inSeconds + 2))) {
+      if (checkCollision(starModel.bounds) && (elapsed.inSeconds > (lastDurationOfScore.inSeconds + 1))) {
         addScore(elapsed);
       }
     }
@@ -201,9 +220,13 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
       _ticker.start();
       showShade = false;
     });
+    listenCarPosition();
+
   }
   
   void endGame(String title) {
+    _gyroSubscription?.cancel();
+    
     setState(() {
       showDialog(
         context: context,
@@ -235,7 +258,6 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     setState(() {
       starModel.showStar = true;
       starModel.left = position;
-      // Reset star to the top of the screen when respawning
       starModel.top = 0;
     });
   }
@@ -246,6 +268,19 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     setState(() {
       coneModel.showCone = true;
       coneModel.left = position;
+    });
+  }
+  
+  void listenCarPosition() {
+    _gyroSubscription?.cancel();
+    
+    // Initialize car position
+    _targetCarPosition = car.left;
+    
+    _gyroSubscription = gyroscopeEventStream().listen((GyroscopeEvent event) {
+      _gyroController.add(event);
+      // Only store the gyroscope value, car position is updated in the game loop
+      _currentGyroValue = -event.y;
     });
   }
 }

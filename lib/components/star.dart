@@ -16,8 +16,7 @@ class _StarState extends State<Star> {
     Positioned(
       top: widget.starModel.top,
       left: widget.starModel.left,
-      child: Container(
-        color: Colors.orange,
+      child: SizedBox(
         height: widget.starModel.height,
         width: widget.starModel.width,
         child: Image.asset("assets/obstacles/star.png"),
