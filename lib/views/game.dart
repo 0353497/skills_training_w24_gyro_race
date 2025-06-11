@@ -25,7 +25,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   late Ticker _ticker;
 
   //game actually ends 2 seconds later bc i still need to show end_track
-  final int gameDurationinSeconds = 5;
+  final int gameDurationinSeconds = 25;
   late Duration timeElasedOnPaused;
 
   String shadeText = "0";
@@ -37,7 +37,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   late final CarModel car;
   final ConeModel coneModel = ConeModel(220, 0);
   final StarModel starModel = StarModel(100, 0);
-
+  Duration lastDurationOfScore = Duration.zero;
   
   @override
   void initState() {
@@ -85,25 +85,32 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     }
 
     trackPosition %= MediaQuery.of(context).size.height;
-
     coneModel.top = trackPosition;
-    starModel.top = trackPosition;
+    
+    starModel.top = (trackPosition + MediaQuery.of(context).size.height * 0.5) % MediaQuery.of(context).size.height;
     
     if (coneModel.top > 0 && coneModel.top < MediaQuery.of(context).size.height - 50) {
       if (checkCollision(coneModel.bounds)) {
-        endGame("Failed");
+        //endGame("Failed");
       }
     }
     if (starModel.top > 0 && starModel.top < MediaQuery.of(context).size.height - 50) {
-      if (checkCollision(starModel.bounds)) {
-        setState(() {
-          starModel.showStar = false;
-          score++;
-        });
+      if (checkCollision(starModel.bounds) && (elapsed.inSeconds > (lastDurationOfScore.inSeconds + 2))) {
+        addScore(elapsed);
       }
     }
-    if (starModel.top > MediaQuery.of(context).size.height - 50) respawnStar();
+    if (trackPosition > MediaQuery.of(context).size.height - 8) respawnCone();
+    if (starModel.top > MediaQuery.of(context).size.height - 8) respawnStar();
   });
+  }
+
+  void addScore(Duration elapsed) async {
+    lastDurationOfScore = elapsed;
+    setState(() {
+      starModel.showStar = false;
+      score++;
+    });
+    return;
   }
 
   void pauzeTick(){ 
@@ -123,6 +130,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   
   void reset() {
     setState(() {
+      lastDurationOfScore = Duration.zero;
       score = 0;
       shadeText = "0";
       showShade = true;
@@ -221,12 +229,23 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   }
   
   void respawnStar() {
-    final int side = Random().nextInt(1);
+    final int side = Random().nextInt(2);
     final double position = side == 0 ? 100 : 220;
 
     setState(() {
       starModel.showStar = true;
       starModel.left = position;
+      // Reset star to the top of the screen when respawning
+      starModel.top = 0;
+    });
+  }
+  void respawnCone() {
+    final int side = Random().nextInt(2);
+    final double position = side == 0 ? 100 : 220;
+
+    setState(() {
+      coneModel.showCone = true;
+      coneModel.left = position;
     });
   }
 }
