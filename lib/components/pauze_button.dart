@@ -10,14 +10,19 @@ class PauzeButton extends StatelessWidget {
     return Positioned(
       top: 40,
       right: 20,
-      child: IconButton.filled(
-        onPressed: onPressed,
-        style: ButtonStyle(
-          foregroundColor: WidgetStatePropertyAll(Colors.black),
-          backgroundColor: WidgetStatePropertyAll(Colors.white)
-        ),
-        icon: Icon(icon)
-        )
+      child: Material(
+        elevation: 8,
+        shape: CircleBorder(),
+        color: Colors.transparent,
+        child: IconButton.filled(
+          onPressed: onPressed,
+          style: ButtonStyle(
+            foregroundColor: WidgetStatePropertyAll(Colors.black),
+            backgroundColor: WidgetStatePropertyAll(Colors.white)
+          ),
+          icon: Icon(icon)
+          ),
+      )
       );
   }
 }

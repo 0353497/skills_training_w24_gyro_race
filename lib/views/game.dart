@@ -7,6 +7,7 @@ import 'package:gyro_race/components/car.dart';
 import 'package:gyro_race/components/cone.dart';
 import 'package:gyro_race/components/end_dialog.dart';
 import 'package:gyro_race/components/pauze_button.dart';
+import 'package:gyro_race/components/score_tracker.dart';
 import 'package:gyro_race/components/shade_overlay.dart';
 import 'package:gyro_race/components/star.dart';
 import 'package:gyro_race/models/car_model.dart';
@@ -33,7 +34,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   final double _sensitivityFactor = 12.0;
   double _targetCarPosition = 100.0;
   double _currentGyroValue = 0.0;
-  final double _movementSmoothness = 0.12;
+  final double _movementSmoothness = 0.6;
 
   String shadeText = "0";
   bool showShade = true;
@@ -76,7 +77,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     double brakingFactor = 1 - (timeSinceBraking / 5.0);
     acceleration *= brakingFactor;
   } else if (firstTrackOver) {
-    acceleration = 7.5;
+    acceleration = 15;
   }
   
   setState(() {
@@ -110,7 +111,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     
     if (coneModel.top > 0 && coneModel.top < MediaQuery.of(context).size.height - 50) {
       if (checkCollision(coneModel.bounds)) {
-        endGame("Failed");
+        failedGame("Failed!");
       }
     }
     if (starModel.top > 0 && starModel.top < MediaQuery.of(context).size.height - 50) {
@@ -179,21 +180,37 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
           Car(car: car,),
           Star(starModel: starModel),
           Cone(coneModel: coneModel),
+          Scoretracker(score: score),
 
-
-          Positioned(
-            top: 50,
-            left: 10,
-            child: Container(
-                width: 120,
-                height: 50,
-                color: Colors.white,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(score.toString()),
-                ),
-              ) 
+         Positioned(
+          top: 50,
+          left: 160,
+          child: Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+            Icon(
+              _currentGyroValue < 0 ? Icons.arrow_forward_ios : Icons.arrow_back_ios,
+              color: Colors.white,
             ),
+            SizedBox(width: 8),
+            Text(
+              _currentGyroValue.toStringAsFixed(2),
+              style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Colors.white,
+              ),
+            ),
+            ],
+          ),
+          ),
+        ),
 
           showShade ? ShadeOverlay(
             text: shadeText,
@@ -209,7 +226,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   
   void startCountDown() async {
 
-    for (var i = 5; i > 0; i--) {
+    for (var i = 3; i > 0; i--) {
       setState(() {
         shadeText = "$i";
       });
@@ -229,6 +246,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     
     setState(() {
       showDialog(
+        barrierDismissible: false,
         context: context,
         builder: (_) => EndDialog(onAgain: () {
           startCountDown();
@@ -239,6 +257,30 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
             fontSize: 48,
             fontWeight: FontWeight.bold,
             fontStyle: FontStyle.italic
+          ),
+        ),
+        ),
+      );
+      reset();
+    });
+  }
+  void failedGame(String title) {
+    _gyroSubscription?.cancel();
+    
+    setState(() {
+      showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (_) => EndDialog(onAgain: () {
+          startCountDown();
+        },
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 48,
+            fontWeight: FontWeight.bold,
+            fontStyle: FontStyle.italic,
+            color: Colors.red
           ),
         ),
         ),
@@ -274,12 +316,10 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   void listenCarPosition() {
     _gyroSubscription?.cancel();
     
-    // Initialize car position
     _targetCarPosition = car.left;
     
     _gyroSubscription = gyroscopeEventStream().listen((GyroscopeEvent event) {
       _gyroController.add(event);
-      // Only store the gyroscope value, car position is updated in the game loop
       _currentGyroValue = -event.y;
     });
   }
