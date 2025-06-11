@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:gyro_race/models/car_model.dart';
 
@@ -17,10 +19,13 @@ class _CarState extends State<Car> {
       child: SizedBox(
         height: widget.car.height,
         width: widget.car.width,
-        child: Image.asset("assets/cars/${widget.car.color}_car.png",
-          height: widget.car.height,
-          width: widget.car.width,
-          fit: BoxFit.contain,
+        child: Transform.rotate(
+          angle: widget.car.rotation ?? (pi *2),
+          child: Image.asset("assets/cars/${widget.car.color}_car.png",
+            height: widget.car.height,
+            width: widget.car.width,
+            fit: BoxFit.contain,
+          ),
         ),
       ),
     );

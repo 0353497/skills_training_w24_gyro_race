@@ -6,7 +6,8 @@ class CarModel {
   final double top = 580;
   final double height = 150;
   final double width = 70;
-  CarModel(this.left, this.color);
+  double? rotation;
+  CarModel(this.left, this.color,{this.rotation});
 
   Rect get bounds {
     return Rect.fromLTWH(left, top, width, height);

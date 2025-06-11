@@ -34,7 +34,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   final double _sensitivityFactor = 12.0;
   double _targetCarPosition = 100.0;
   double _currentGyroValue = 0.0;
-  final double _movementSmoothness = 0.6;
+  final double _movementSmoothness = 0.3;
 
   String shadeText = "0";
   bool showShade = true;
@@ -77,7 +77,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     double brakingFactor = 1 - (timeSinceBraking / 5.0);
     acceleration *= brakingFactor;
   } else if (firstTrackOver) {
-    acceleration = 15;
+    acceleration = 7.5;
   }
   
   setState(() {
@@ -108,6 +108,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     
     double distance = _targetCarPosition - car.left;
     car.left += distance * _movementSmoothness;
+    car.rotation = -(_currentGyroValue);
     
     if (coneModel.top > 0 && coneModel.top < MediaQuery.of(context).size.height - 50) {
       if (checkCollision(coneModel.bounds)) {
@@ -181,36 +182,6 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
           Star(starModel: starModel),
           Cone(coneModel: coneModel),
           Scoretracker(score: score),
-
-         Positioned(
-          top: 50,
-          left: 160,
-          child: Container(
-          padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.7),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-            Icon(
-              _currentGyroValue < 0 ? Icons.arrow_forward_ios : Icons.arrow_back_ios,
-              color: Colors.white,
-            ),
-            SizedBox(width: 8),
-            Text(
-              _currentGyroValue.toStringAsFixed(2),
-              style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-              color: Colors.white,
-              ),
-            ),
-            ],
-          ),
-          ),
-        ),
 
           showShade ? ShadeOverlay(
             text: shadeText,
