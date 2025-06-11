@@ -1,9 +1,16 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:gyro_race/components/car.dart';
+import 'package:gyro_race/components/cone.dart';
 import 'package:gyro_race/components/end_dialog.dart';
 import 'package:gyro_race/components/pauze_button.dart';
 import 'package:gyro_race/components/shade_overlay.dart';
+import 'package:gyro_race/components/star.dart';
+import 'package:gyro_race/models/car_model.dart';
+import 'package:gyro_race/models/cone_model.dart';
+import 'package:gyro_race/models/star_model.dart';
 
 class Game extends StatefulWidget {
   final String carColor;
@@ -26,15 +33,20 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   double trackPosition = 0;
   bool firstTrackOver = false;
   bool showEndTrack = false;
+  int score = 0;
+  late final CarModel car;
+  final ConeModel coneModel = ConeModel(220, 0);
+  final StarModel starModel = StarModel(100, 0);
+
   
   @override
   void initState() {
     super.initState();
     
+    car = CarModel(100, widget.carColor);
     _ticker = createTicker((elapsed) {
       onTick(elapsed);
     });
-    
 
     startCountDown();
   }
@@ -55,7 +67,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     double brakingFactor = 1 - (timeSinceBraking / 4.0);
     acceleration *= brakingFactor;
   }
-
+  
   setState(() {
     trackPosition += acceleration;
 
@@ -69,12 +81,29 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     }
 
     if (elapsed.inSeconds > (gameDurationinSeconds + 3)) {
-      endGame();
+      endGame("Finished!");
     }
 
     trackPosition %= MediaQuery.of(context).size.height;
-  });
 
+    coneModel.top = trackPosition;
+    starModel.top = trackPosition;
+    
+    if (coneModel.top > 0 && coneModel.top < MediaQuery.of(context).size.height - 50) {
+      if (checkCollision(coneModel.bounds)) {
+        endGame("Failed");
+      }
+    }
+    if (starModel.top > 0 && starModel.top < MediaQuery.of(context).size.height - 50) {
+      if (checkCollision(starModel.bounds)) {
+        setState(() {
+          starModel.showStar = false;
+          score++;
+        });
+      }
+    }
+    if (starModel.top > MediaQuery.of(context).size.height - 50) respawnStar();
+  });
   }
 
   void pauzeTick(){ 
@@ -94,6 +123,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   
   void reset() {
     setState(() {
+      score = 0;
       shadeText = "0";
       showShade = true;
       trackPosition = 0;
@@ -117,7 +147,27 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
           showEndTrack
           ? EndTrack(trackPosition: (trackPosition) - (screenHeight * 0.9))
           : SizedBox(),
-          Car(x: 100, color: widget.carColor,),
+          
+
+          Car(car: car,),
+          Star(starModel: starModel),
+          Cone(coneModel: coneModel),
+
+
+          Positioned(
+            top: 50,
+            left: 10,
+            child: Container(
+                width: 120,
+                height: 50,
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(score.toString()),
+                ),
+              ) 
+            ),
+
           showShade ? ShadeOverlay(
             text: shadeText,
             pauzed: !_ticker.isActive,
@@ -145,7 +195,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     });
   }
   
-  void endGame() {
+  void endGame(String title) {
     setState(() {
       showDialog(
         context: context,
@@ -153,7 +203,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
           startCountDown();
         },
         title: Text(
-          "Finished!",
+          title,
           style: TextStyle(
             fontSize: 48,
             fontWeight: FontWeight.bold,
@@ -163,6 +213,20 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
         ),
       );
       reset();
+    });
+  }
+  
+  bool checkCollision(Rect bounds) {
+    return car.bounds.overlaps(bounds);
+  }
+  
+  void respawnStar() {
+    final int side = Random().nextInt(1);
+    final double position = side == 0 ? 100 : 220;
+
+    setState(() {
+      starModel.showStar = true;
+      starModel.left = position;
     });
   }
 }

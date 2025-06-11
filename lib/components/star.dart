@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:gyro_race/models/star_model.dart';
 
 class Star extends StatefulWidget {
-  const Star({super.key, required this.x, required this.y});
-  final double x;
-  final double y;
+  const Star({super.key, required this.starModel,});
+  final StarModel starModel;
   @override
   State<Star> createState() => _StarState();
 }
@@ -11,14 +11,17 @@ class Star extends StatefulWidget {
 class _StarState extends State<Star> {
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      bottom: widget.y,
-      left: widget.x,
-      child: SizedBox(
-        height: 50,
-        width: 50,
+    return 
+    widget.starModel.showStar ?
+    Positioned(
+      top: widget.starModel.top,
+      left: widget.starModel.left,
+      child: Container(
+        color: Colors.orange,
+        height: widget.starModel.height,
+        width: widget.starModel.width,
         child: Image.asset("assets/obstacles/star.png"),
       ),
-    );
+    ) : SizedBox(); 
   }
 }
