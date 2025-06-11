@@ -111,7 +111,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     
     if (coneModel.top > 0 && coneModel.top < MediaQuery.of(context).size.height - 50) {
       if (checkCollision(coneModel.bounds)) {
-        failedGame("Failed!");
+        failedGame("Crashed!");
       }
     }
     if (starModel.top > 0 && starModel.top < MediaQuery.of(context).size.height - 50) {
