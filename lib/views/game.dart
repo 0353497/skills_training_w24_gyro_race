@@ -28,7 +28,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   late Ticker _ticker;
   final StreamController _gyroController = StreamController();
   StreamSubscription? _gyroSubscription;
-  final int gameDurationinSeconds = 25;
+  final int gameDurationinSeconds = 20;
   late Duration timeElasedOnPaused;
 
   final double _sensitivityFactor = 12.0;
@@ -41,6 +41,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   double trackPosition = 0;
   bool firstTrackOver = false;
   bool showEndTrack = false;
+  bool disbandEntrack = false;
   int score = 0;
   late final CarModel car;
   final ConeModel coneModel = ConeModel(220, 0);
@@ -71,7 +72,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   final int speed = 7500;
   double acceleration = elapsed.inMilliseconds.clamp(0, speed).toDouble() / 1000;
 
-  if (showEndTrack) {
+  if (showEndTrack || disbandEntrack) {
     double timeSinceBraking = (elapsed.inSeconds - gameDurationinSeconds).toDouble().clamp(0, 5);
     
     double brakingFactor = 1 - (timeSinceBraking / 5.0);
@@ -88,11 +89,25 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     }
 
     if (elapsed.inSeconds > gameDurationinSeconds &&
-        trackPosition < MediaQuery.of(context).size.height * 0.75) {
+        trackPosition < MediaQuery.of(context).size.height * 0.75
+        && !disbandEntrack) {
       showEndTrack = true;
     }
 
-    if (elapsed.inSeconds > (gameDurationinSeconds + 3)) {
+    if (showEndTrack) {
+      print("trackpos: $trackPosition height: ${MediaQuery.of(context).size.height * 0.90} ${trackPosition >= MediaQuery.of(context).size.height}");
+      print((trackPosition - MediaQuery.of(context).size.height) >= -5 );
+      print("ps ${(trackPosition) - (MediaQuery.of(context).size.height)}");
+    }
+    
+    
+    if (elapsed.inSeconds > gameDurationinSeconds &&
+        (trackPosition - MediaQuery.of(context).size.height) >= -5 && showEndTrack) {
+         // showEndTrack = false;
+          disbandEntrack = true;
+    }
+
+    if (elapsed.inSeconds > gameDurationinSeconds + 3) {
       endGame("Finished!");
     }
 
@@ -112,7 +127,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     
     if (coneModel.top > 0 && coneModel.top < MediaQuery.of(context).size.height - 50) {
       if (checkCollision(coneModel.bounds)) {
-        failedGame("Crashed!");
+      //  failedGame("Crashed!");
       }
     }
     if (starModel.top > 0 && starModel.top < MediaQuery.of(context).size.height - 50) {
@@ -159,6 +174,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
       firstTrackOver = false;
       showEndTrack = false;
       _ticker.stop();
+      disbandEntrack = false;
     });
   }
 
@@ -174,7 +190,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
           SizedBox()
           :  StartTrack(trackPosition: trackPosition + (screenHeight * 0.28)),
           showEndTrack
-          ? EndTrack(trackPosition: (trackPosition) - (screenHeight * 0.9))
+          ? EndTrack(trackPosition: (trackPosition) - (screenHeight))
           : SizedBox(),
           
 
