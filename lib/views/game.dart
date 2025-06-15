@@ -28,7 +28,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   late Ticker _ticker;
   final StreamController _gyroController = StreamController();
   StreamSubscription? _gyroSubscription;
-  final int gameDurationinSeconds = 20;
+  final int gameDurationinSeconds = 19;
   late Duration timeElasedOnPaused;
 
   final double _sensitivityFactor = 12.0;
@@ -103,11 +103,11 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     
     if (elapsed.inSeconds > gameDurationinSeconds &&
         (trackPosition - MediaQuery.of(context).size.height) >= -5 && showEndTrack) {
-         // showEndTrack = false;
+         showEndTrack = false;
           disbandEntrack = true;
     }
 
-    if (elapsed.inSeconds > gameDurationinSeconds + 3) {
+    if (elapsed.inSeconds > gameDurationinSeconds + 4) {
       endGame("Finished!");
     }
 
@@ -190,7 +190,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
           SizedBox()
           :  StartTrack(trackPosition: trackPosition + (screenHeight * 0.28)),
           showEndTrack
-          ? EndTrack(trackPosition: (trackPosition) - (screenHeight))
+          ? EndTrack(trackPosition: (trackPosition) - (screenHeight) + 300)
           : SizedBox(),
           
 
