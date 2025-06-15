@@ -28,7 +28,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   late Ticker _ticker;
   final StreamController _gyroController = StreamController();
   StreamSubscription? _gyroSubscription;
-  final int gameDurationinSeconds = 20;
+  final int gameDurationinSeconds = 18;
   late Duration timeElasedOnPaused;
 
   final double _sensitivityFactor = 12.0;
