@@ -28,7 +28,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   late Ticker _ticker;
   final StreamController _gyroController = StreamController();
   StreamSubscription? _gyroSubscription;
-  final int gameDurationinSeconds = 19;
+  final int gameDurationinSeconds = 20;
   late Duration timeElasedOnPaused;
 
   final double _sensitivityFactor = 12.0;
@@ -43,6 +43,8 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
   bool showEndTrack = false;
   bool disbandEntrack = false;
   int score = 0;
+  double endTrackPosition = -800;
+
   late final CarModel car;
   final ConeModel coneModel = ConeModel(220, 0);
   final StarModel starModel = StarModel(100, 0);
@@ -95,19 +97,19 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     }
 
     if (showEndTrack) {
-      print("trackpos: $trackPosition height: ${MediaQuery.of(context).size.height * 0.90} ${trackPosition >= MediaQuery.of(context).size.height}");
-      print((trackPosition - MediaQuery.of(context).size.height) >= -5 );
-      print("ps ${(trackPosition) - (MediaQuery.of(context).size.height)}");
+      endTrackPosition += acceleration;
+      print("acceleration: $acceleration");
+      print("trackpos: $endTrackPosition height: ${MediaQuery.of(context).size.height} ${endTrackPosition >= MediaQuery.of(context).size.height}");
     }
     
     
     if (elapsed.inSeconds > gameDurationinSeconds &&
         (trackPosition - MediaQuery.of(context).size.height) >= -5 && showEndTrack) {
-         showEndTrack = false;
+        //  showEndTrack = false;
           disbandEntrack = true;
     }
 
-    if (elapsed.inSeconds > gameDurationinSeconds + 4) {
+    if (elapsed.inSeconds > gameDurationinSeconds + 5) {
       endGame("Finished!");
     }
 
@@ -127,7 +129,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
     
     if (coneModel.top > 0 && coneModel.top < MediaQuery.of(context).size.height - 50) {
       if (checkCollision(coneModel.bounds)) {
-      //  failedGame("Crashed!");
+       failedGame("Crashed!");
       }
     }
     if (starModel.top > 0 && starModel.top < MediaQuery.of(context).size.height - 50) {
@@ -175,6 +177,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
       showEndTrack = false;
       _ticker.stop();
       disbandEntrack = false;
+      endTrackPosition = -800;
     });
   }
 
@@ -190,7 +193,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
           SizedBox()
           :  StartTrack(trackPosition: trackPosition + (screenHeight * 0.28)),
           showEndTrack
-          ? EndTrack(trackPosition: (trackPosition) - (screenHeight) + 300)
+          ? EndTrack(trackPosition: endTrackPosition)
           : SizedBox(),
           
 
